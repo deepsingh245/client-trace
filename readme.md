@@ -115,7 +115,7 @@ This package is licensed under the [MIT License](LICENSE).
 
 ## Contributions
 
-Feel free to contribute to **Client Track** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/your-repo-link).
+Feel free to contribute to **Client Track** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/deepsingh245/client-track).
 
 ---
 
