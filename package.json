@@ -1,0 +1,33 @@
+{
+  "name": "client-trace",
+  "version": "1.0.0",
+  "description": "\"A versatile library that combines header data with optional device and browser attributes to enhance accuracy. Offers customizable logic for ID generation, making it adaptable to diverse use cases.\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "unique-id",
+    "user-identification",
+    "client-side",
+    "server-side",
+    "id-generator",
+    "unique-identifier",
+    "user-authentication",
+    "header-parser",
+    "device-id",
+    "browser-id",
+    "cross-platform",
+    "session-id",
+    "identity-management",
+    "user-tracking",
+    "api-integration",
+    "custom-logic",
+    "header-analysis",
+    "user-session",
+    "lightweight-library",
+    "device-fingerprint"
+  ],
+  "author": "https://github.com/deepsingh245",
+  "license": "ISC"
+}
