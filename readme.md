@@ -41,7 +41,7 @@ Here’s how you can use `client-trace` to generate a unique user ID based on an
 
 ```javascript
 const express = require("express");
-const { userIdentification } = require("client-trace");
+const { uniqueUserId } = require("client-trace");
 
 const app = express();
 
@@ -50,7 +50,7 @@ app.use(express.json());
 app.post("/generate-id", async (req, res) => {
   try {
     // Generate a unique ID for the user
-    const uniqueId = await userIdentification(req);
+    const uniqueId = await uniqueUserId(req);
 
     res.status(200).json({
       success: true,
