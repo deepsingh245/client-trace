@@ -1,139 +1,122 @@
-### **README for `client-trace`**
+# Client Track
+
+**Client Track** is a lightweight and efficient npm package for generating a unique identifier for user identification in HTTP requests. It leverages request headers, socket data, and optional DNS lookups for enhanced accuracy and adaptability. This package is ideal for tracking users or devices in both server-side and client-side environments.
 
 ---
 
-# **client-trace**
+## Features
 
-`client-trace` is a lightweight and flexible NPM package for generating unique IDs to identify users based on their HTTP request data. This package extracts essential information such as headers, IP addresses, and device attributes to produce a reliable unique identifier, making it ideal for tracking users across client-server interactions.
-
----
-
-## **Features**
-
-- **Automatic User Identification**: Combines headers, device attributes, and IPs for accurate user identification.
-- **Lightweight**: Minimal dependencies and straightforward implementation.
-- **Secure Hashing**: Uses cryptographic methods to hash identifiers securely.
-- **Cross-Platform**: Works for both server-side and client-side (with Node.js environments).
+- **Accurate Identification**: Combines HTTP headers and socket information to generate a unique ID.
+- **Force Mode**: A third parameter allows forcing DNS lookups to retrieve the user's IP address.
+- **Lightweight and Simple**: Easy to integrate into any Node.js application.
+- **Customizable**: Works with both server and client-side HTTP requests.
 
 ---
 
-## **Installation**
+## Installation
+
+Install the package using npm:
 
 ```bash
-npm install client-trace
+npm install client-track
 ```
 
 ---
 
-## **Usage**
+## Usage
 
-### **Import the Package**
+### Basic Example
 
-First, import the package into your Node.js project:
+Here's an example of how to use **Client Track** in a Node.js application:
 
 ```javascript
-const { userIdentification } = require("client-trace");
+const { uniqueUserId } = require("client-track");
+
+// Example HTTP request data
+const headers = {
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+  "x-forwarded-for": "203.0.113.195",
+  "sec-ch-ua-platform": '"Windows"',
+};
+const socket = {
+  remoteAddress: "203.0.113.1",
+};
+
+// Generate a unique user ID
+const uniqueId = await uniqueUserId(headers, socket);
+
+console.log("Unique ID:", uniqueId);
 ```
 
-### **Example Usage**
+### With Force Mode
 
-Here’s how you can use `client-trace` to generate a unique user ID based on an HTTP request:
+To enforce DNS lookups for IP resolution, pass `true` as the third parameter:
 
 ```javascript
-const express = require("express");
-const { uniqueUserId } = require("client-trace");
+const uniqueId = await uniqueUserId(headers, socket, true);
 
-const app = express();
-
-app.use(express.json());
-
-app.post("/generate-id", async (req, res) => {
-  try {
-    // Generate a unique ID for the user
-    const uniqueId = await uniqueUserId(req);
-
-    res.status(200).json({
-      success: true,
-      uniqueId,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on http://localhost:3000");
-});
-```
-
-### **Request Headers Example**
-
-When sending a request to the server, include the following headers:
-
-- `User-Agent`: For device and browser information.
-- `X-Forwarded-For`: For the client’s IP address (if behind a proxy).
-- Other standard HTTP headers like `sec-ch-ua-platform`, `referer`, etc.
-
-### **Response Example**
-
-A successful response from the endpoint might look like this:
-
-```json
-{
-  "success": true,
-  "uniqueId": "hashed-id-value"
-}
+console.log("Unique ID:", uniqueId);
 ```
 
 ---
 
-## **API Documentation**
+## API
 
-### **`userIdentification(headers)`**
+### `uniqueUserId(headers, socket, force)`
 
-- **Description**: Accepts HTTP request headers and generates a unique user ID.
-- **Parameters**:
-  - `request` (Object): The entire HTTP request object, including headers, body, and other metadata.
-- **Returns**:
-  - A Promise that resolves to an object containing:
-    - `uniqueId` (string): A secure hashed identifier for the user.
-- **Example**:
+#### Parameters:
 
-  ```javascript
-  const req = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    "x-forwarded-for": "203.0.113.1",
-    "sec-ch-ua-platform": "Windows",
-  };
+1. **`headers`** _(Object, Required)_:
 
-  const userData = await userIdentification(req);
-  console.log(userData);
-  ```
+   - The request headers sent by the user. Must include common headers like `user-agent`, `x-forwarded-for`, etc.
 
----
+2. **`socket`** _(Object, Required)_:
 
-## **Requirements**
+   - The socket object of the HTTP request. Must include `remoteAddress` for identifying the client IP.
 
-- Node.js `>=14.x`
-- Supports HTTPS request handling.
+3. **`force`** _(Boolean, Optional)_:
+   - If `true`, the function will attempt to resolve the IP using DNS servers, even if it’s already available in headers or socket.
+
+#### Returns:
+
+An object containing the following properties:
+
+- **`uniqueId`**: The generated unique identifier.
 
 ---
 
-## **License**
+## Example Output
 
-This package is licensed under the MIT License. See the LICENSE file for more details.
-
----
-
-## **Contributing**
-
-Contributions, issues, and feature requests are welcome! Feel free to fork the repository and submit a pull request.
+```javascript
+"0d7c44c95d89d795b54dfa381ebbd2cc42635fd6383f6e28ddace29bf771d3d6";
+```
 
 ---
 
-## **Author**
+## Error Handling
 
-Developed by [Deep Singh](https://github.com/deepsingh245)
+If the function encounters an error (e.g., invalid headers, DNS failure), it will log the error and return `undefined`.
+
+---
+
+## Use Cases
+
+1. **User Tracking**: Generate unique IDs for identifying users across sessions or devices.
+2. **Security**: Enhance logging for security and fraud detection.
+3. **Analytics**: Track devices or browsers accessing your application.
+
+---
+
+## License
+
+This package is licensed under the [MIT License](LICENSE).
+
+---
+
+## Contributions
+
+Feel free to contribute to **Client Track** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/your-repo-link).
+
+---
+
+Let me know if you need additional edits or want to include any specific details!
