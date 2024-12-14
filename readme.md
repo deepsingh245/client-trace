@@ -49,11 +49,8 @@ app.use(express.json());
 
 app.post("/generate-id", async (req, res) => {
   try {
-    // Extract headers from the incoming request
-    const headers = req.headers;
-
     // Generate a unique ID for the user
-    const uniqueId = await userIdentification(headers);
+    const uniqueId = await userIdentification(req);
 
     res.status(200).json({
       success: true,
