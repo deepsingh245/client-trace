@@ -1,6 +1,6 @@
-# Client Track
+# Client Trace
 
-**Client Track** is a lightweight and efficient npm package for generating a unique identifier for user identification in HTTP requests. It leverages request headers, socket data, and optional DNS lookups for enhanced accuracy and adaptability. This package is ideal for tracking users or devices in both server-side and client-side environments.
+**Client Trace** is a lightweight and efficient npm package for generating a unique identifier for user identification in HTTP requests. It leverages request headers, socket data, and optional DNS lookups for enhanced accuracy and adaptability. This package is ideal for tracking users or devices in both server-side and client-side environments.
 
 ---
 
@@ -18,7 +18,7 @@
 Install the package using npm:
 
 ```bash
-npm install client-track
+npm install client-trace
 ```
 
 ---
@@ -27,10 +27,10 @@ npm install client-track
 
 ### Basic Example
 
-Here's an example of how to use **Client Track** in a Node.js application:
+Here's an example of how to use **Client Trace** in a Node.js application:
 
 ```javascript
-const { uniqueUserId } = require("client-track");
+const { uniqueUserId } = require("client-trace");
 
 // Example HTTP request data
 const headers = {
@@ -101,22 +101,23 @@ If the function encounters an error (e.g., invalid headers, DNS failure), it wil
 
 ## Use Cases
 
-1. **User Tracking**: Generate unique IDs for identifying users across sessions or devices.
+1. **User Tracing**: Generate unique IDs for identifying users across sessions or devices.
 2. **Security**: Enhance logging for security and fraud detection.
-3. **Analytics**: Track devices or browsers accessing your application.
+3. **Analytics**: Trace devices or browsers accessing your application.
 
 ---
 
-## License
+### ⚠️ **Note on Version 1.0.0**
 
-This package is licensed under the [MIT License](LICENSE).
+This is the **first version** of the library, and there are known limitations:
+
+- The library may generate the **same unique ID** for devices accessing the application over the **same IP address** or **network connection**.
+- This behavior occurs due to the current logic relying on headers, IP, and socket information, which can be identical for users on shared networks or devices.
+
+I am actively working to enhance the ID generation logic in future versions to address these limitations. Contributions, feedback, and suggestions are welcome!
 
 ---
 
 ## Contributions
 
-Feel free to contribute to **Client Track** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/deepsingh245/client-track).
-
----
-
-Let me know if you need additional edits or want to include any specific details!
+Feel free to contribute to **Client Trace** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/deepsingh245/client-trace).
