@@ -44,6 +44,7 @@ const socket = {
 
 // Generate a unique user ID
 const uniqueId = await uniqueUserId(headers, socket);
+// or you can add req.headers, req.socket
 
 console.log("Unique ID:", uniqueId);
 ```
