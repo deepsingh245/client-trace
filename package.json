@@ -1,6 +1,6 @@
 {
   "name": "client-trace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "\"A versatile library that combines header data with optional device and browser attributes to enhance accuracy. Offers customizable logic for ID generation, making it adaptable to diverse use cases.\"",
   "main": "index.js",
   "scripts": {
