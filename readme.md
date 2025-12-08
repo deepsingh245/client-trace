@@ -1,124 +1,125 @@
-# Client Trace
+# client-trace
 
-**Client Trace** is a lightweight and efficient npm package for generating a unique identifier for user identification in HTTP requests. It leverages request headers, socket data, and optional DNS lookups for enhanced accuracy and adaptability. This package is ideal for tracking users or devices in both server-side and client-side environments.
-
----
+A comprehensive client-side security and telemetry library for modern web applications. `client-trace` provides a suite of modules to detect tampering, identify devices, monitor behavior, and secure data transport.
 
 ## Features
 
-- **Accurate Identification**: Combines HTTP headers and socket information to generate a unique ID.
-- **Force Mode**: A third parameter allows forcing DNS lookups to retrieve the user's IP address.
-- **Lightweight and Simple**: Easy to integrate into any Node.js application.
-- **Customizable**: Works with both server and client-side HTTP requests.
-
----
+- **Integrity Verification**: Detect if your client bundle has been modified.
+- **Network Analysis**: Detect monkey-patched `fetch`/`XHR`, proxies, and timing anomalies.
+- **Device Fingerprinting**: Lightweight, privacy-friendly device identification.
+- **Bot Detection**: Analyze mouse movements and click patterns to identify bots.
+- **Security Monitoring**: Detect script injections, CSP violations, and local storage tampering.
+- **Secure Transport**: End-to-end encryption (AES-GCM), payload signing (HMAC), and replay protection.
 
 ## Installation
-
-Install the package using npm:
 
 ```bash
 npm install client-trace
 ```
 
----
-
 ## Usage
 
-### Basic Example
+### Quick Start (Aggregated Report)
 
-Here's an example of how to use **Client Trace** in a Node.js application:
+The easiest way to use `client-trace` is to collect a full security report.
 
 ```javascript
-const { uniqueUserId } = require("client-trace");
+import { collectSecurityReport } from 'client-trace';
 
-// Example HTTP request data
-const headers = {
-  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  "x-forwarded-for": "203.0.113.195",
-  "sec-ch-ua-platform": '"Windows"',
+const config = {
+  bundleUrl: '/assets/main.js',
+  expectedBundleHash: 'sha256-hash-of-your-bundle', // Optional
+  pingUrl: '/api/ping', // For proxy/timing detection
+  userUniqueId: 'user-123', // For session token
+  hashedIp: 'hash-of-ip', // Provided by server
+  secret: 'your-shared-secret' // For signing/encryption
 };
-const socket = {
-  remoteAddress: "203.0.113.1",
-};
 
-// Generate a unique user ID
-const uniqueId = await uniqueUserId(headers, socket);
-// or you can add req.headers, req.socket
-
-console.log("Unique ID:", uniqueId);
+collectSecurityReport(config).then(report => {
+  console.log('Security Report:', report);
+  // Send report to your server
+});
 ```
 
-### With Force Mode
+### Modular Usage
 
-To enforce DNS lookups for IP resolution, pass `true` as the third parameter:
+You can also import and use individual modules as needed.
 
+#### 1. Bundle Integrity
 ```javascript
-const uniqueId = await uniqueUserId(headers, socket, true);
+import { verifyBundleIntegrity } from 'client-trace';
 
-console.log("Unique ID:", uniqueId);
+verifyBundleIntegrity('/main.js', 'expected-hash').then(result => {
+  if (!result.integrityOk) {
+    console.error('Bundle tampered!', result.actualHash);
+  }
+});
 ```
 
----
-
-## API
-
-### `uniqueUserId(headers, socket, force)`
-
-#### Parameters:
-
-1. **`headers`** _(Object, Required)_:
-
-   - The request headers sent by the user. Must include common headers like `user-agent`, `x-forwarded-for`, etc.
-
-2. **`socket`** _(Object, Required)_:
-
-   - The socket object of the HTTP request. Must include `remoteAddress` for identifying the client IP.
-
-3. **`force`** _(Boolean, Optional)_:
-   - If `true`, the function will attempt to resolve the IP using DNS servers, even if it’s already available in headers or socket.
-
-#### Returns:
-
-An object containing the following properties:
-
-- **`uniqueId`**: The generated unique identifier.
-
----
-
-## Example Output
-
+#### 2. Network Tampering Detection
 ```javascript
-"0d7c44c95d89d795b54dfa381ebbd2cc42635fd6383f6e28ddace29bf771d3d6";
+import { detectNetworkAPITampering } from 'client-trace';
+
+const result = detectNetworkAPITampering();
+if (result.tampered) {
+  console.warn('Network APIs modified:', result.tamperedFunctions);
+}
 ```
 
----
+#### 3. Device Fingerprinting
+```javascript
+import { getDeviceFingerprint } from 'client-trace';
 
-## Error Handling
+getDeviceFingerprint().then(({ fingerprintHash, components }) => {
+  console.log('Device ID:', fingerprintHash);
+});
+```
 
-If the function encounters an error (e.g., invalid headers, DNS failure), it will log the error and return `undefined`.
+#### 4. Bot Detection
+```javascript
+import { startBehaviorMonitoring, detectBot } from 'client-trace';
 
----
+// Start monitoring early in the session
+startBehaviorMonitoring();
 
-## Use Cases
+// Check later (e.g., before form submission)
+const botCheck = detectBot();
+if (botCheck.botLikely) {
+  console.warn('Bot detected!', botCheck.signals);
+}
+```
 
-1. **User Tracing**: Generate unique IDs for identifying users across sessions or devices.
-2. **Security**: Enhance logging for security and fraud detection.
-3. **Analytics**: Trace devices or browsers accessing your application.
+#### 5. Secure Transport (Encryption)
+```javascript
+import { encryptTelemetry, decryptTelemetry } from 'client-trace';
 
----
+const payload = { event: 'login', timestamp: Date.now() };
+const secret = 'shared-secret-key';
 
-### ⚠️ **Note on Version 1.0.0**
+encryptTelemetry(payload, secret).then(encrypted => {
+  // Send `encrypted` object to server
+  console.log('Encrypted:', encrypted);
+});
+```
 
-This is the **first version** of the library, and there are known limitations:
+## Modules Overview
 
-- The library may generate the **same unique ID** for devices accessing the application over the **same IP address** or **network connection**.
-- This behavior occurs due to the current logic relying on headers, IP, and socket information, which can be identical for users on shared networks or devices.
+| Category | Module | Description |
+|----------|--------|-------------|
+| **Integrity** | `verifyBundleIntegrity` | Checks if the script file matches expected hash. |
+| | `generateSessionToken` | Creates a signed token binding user to IP/UA. |
+| **Network** | `detectNetworkAPITampering` | Checks if `fetch` or `XHR` are native code. |
+| | `detectProxy` | Inspects headers for proxy signatures. |
+| | `detectTimingAnomalies` | Measures DNS/TTFB to find MITM delays. |
+| **Fingerprint** | `getDeviceFingerprint` | Hashes non-unique signals (screen, OS, timezone). |
+| | `detectBot` | Analyzes entropy of mouse moves and clicks. |
+| **Security** | `detectInjections` | Monitors DOM for new `<script>` tags. |
+| | `listenForCSPViolations` | Captures CSP violation events. |
+| | `checkStorageIntegrity` | Verifies `localStorage` hasn't been changed externally. |
+| **Transport** | `signPayload` | Signs data with HMAC-SHA256. |
+| | `encryptTelemetry` | Encrypts data with AES-GCM. |
+| | `getNonce` | Generates rotating nonce for replay protection. |
 
-I am actively working to enhance the ID generation logic in future versions to address these limitations. Contributions, feedback, and suggestions are welcome!
+## License
 
----
-
-## Contributions
-
-Feel free to contribute to **Client Trace** by creating issues or submitting pull requests on the [GitHub repository](https://github.com/deepsingh245/client-trace).
+ISC
