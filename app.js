@@ -1,7 +1,7 @@
 // Import all modules from the library
 import * as ClientTrace from '../src/index.js';
 
-const BACKEND_URL = 'https://0220c7cd646a.ngrok-free.app'; // Relative paths, served by same origin
+const BACKEND_URL = 'https://localhost:5000'; // run backend server on port 5000 from backend branch
 
 // Helper function to display results
 function displayResult(elementId, data, type = 'success') {

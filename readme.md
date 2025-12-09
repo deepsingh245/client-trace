@@ -1,125 +1,96 @@
-# client-trace
+# Client‑Trace Front‑End Test Suite & Demo
 
-A comprehensive client-side security and telemetry library for modern web applications. `client-trace` provides a suite of modules to detect tampering, identify devices, monitor behavior, and secure data transport.
+## 📖 Overview
+This branch of **client‑trace** contains only the front‑end assets (HTML, CSS, and JavaScript) that demonstrate the security‑focused `client‑trace` library. It provides a **premium dark‑mode UI** with smooth micro‑animations, allowing you to manually trigger each of the 14 security modules and view real‑time results.
 
-## Features
+---
 
-- **Integrity Verification**: Detect if your client bundle has been modified.
-- **Network Analysis**: Detect monkey-patched `fetch`/`XHR`, proxies, and timing anomalies.
-- **Device Fingerprinting**: Lightweight, privacy-friendly device identification.
-- **Bot Detection**: Analyze mouse movements and click patterns to identify bots.
-- **Security Monitoring**: Detect script injections, CSP violations, and local storage tampering.
-- **Secure Transport**: End-to-end encryption (AES-GCM), payload signing (HMAC), and replay protection.
+## ✨ Features
+- **Interactive UI** – Buttons, input fields and live result panels.
+- **Full‑screen dark theme** with glass‑morphism style and subtle animations.
+- **Real‑time monitoring** – Bot‑behaviour detection, network‑timing analysis, CSP listening, etc.
+- **Transport security** – HMAC signing, AES‑GCM encryption, nonce generation.
+- **Comprehensive report** – One‑click generation of a JSON security report covering all modules.
+- **Extensible** – Add new tests by editing `app.js`.
 
-## Installation
+---
 
+## 🛠 Prerequisites
+- **Node.js** (v18 or newer).
+- A modern browser that supports ES‑modules and the Web Crypto API.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Installation
+Install the dependencies:
 ```bash
-npm install client-trace
+npm install
 ```
 
-## Usage
+### 2. Development
+Start the local development server with hot reload:
+```bash
+npm run dev
+```
+The app will open automatically at `http://localhost:3000`.
 
-### Quick Start (Aggregated Report)
+### 3. Production Build
+To create an optimized production build:
+```bash
+npm run build
+```
+The output will be in the `dist/` folder, ready to be deployed to any static hosting service (Vercel, Netlify, GitHub Pages, etc.).
 
-The easiest way to use `client-trace` is to collect a full security report.
-
-```javascript
-import { collectSecurityReport } from 'client-trace';
-
-const config = {
-  bundleUrl: '/assets/main.js',
-  expectedBundleHash: 'sha256-hash-of-your-bundle', // Optional
-  pingUrl: '/api/ping', // For proxy/timing detection
-  userUniqueId: 'user-123', // For session token
-  hashedIp: 'hash-of-ip', // Provided by server
-  secret: 'your-shared-secret' // For signing/encryption
-};
-
-collectSecurityReport(config).then(report => {
-  console.log('Security Report:', report);
-  // Send report to your server
-});
+You can preview the production build locally:
+```bash
+npm run preview
 ```
 
-### Modular Usage
+> **Note:** Opening `index.html` directly from the file system will not work because ES‑modules require an HTTP server.
 
-You can also import and use individual modules as needed.
+---
 
-#### 1. Bundle Integrity
-```javascript
-import { verifyBundleIntegrity } from 'client-trace';
+## 📚 How to Use the UI
+| Section | What it does | How to try it |
+|---------|--------------|--------------|
+| **Integrity Verification** | Checks bundle hash and validates a signed session token. | Click *Generate Token*, then *Verify Token*.
+| **Network Analysis** | Detects fetch‑tampering, proxy signatures and timing anomalies. | Use *Simulate Tampering* → *Detect Tampering*.
+| **Fingerprint & Bot Detection** | Generates a device fingerprint and analyses mouse‑movement entropy. | Click *Start Monitoring*, move the mouse, then *Detect Bot*.
+| **Security Monitoring** | CSP listener, script‑injection detection, storage tampering. | Use *Start CSP Listener* and *Inject Test Script*.
+| **Transport Security** | HMAC signing, AES‑GCM encryption, nonce generation. | Fill the JSON payload fields and press the corresponding *Sign* / *Encrypt* buttons.
+| **Full Report** | Runs every check and outputs a consolidated JSON report. | Click *Generate Full Report*.
 
-verifyBundleIntegrity('/main.js', 'expected-hash').then(result => {
-  if (!result.integrityOk) {
-    console.error('Bundle tampered!', result.actualHash);
-  }
-});
+All results appear in the collapsible **Result** panel below each test card, colour‑coded (green = success, red = error, orange = warning).
+
+---
+
+## 🐞 Troubleshooting
+- **Modules won’t load** – Ensure you are serving the files via HTTP. Opening `index.html` directly will fail.
+- **Bot detection always low** – Move the mouse around for a few seconds before clicking *Detect Bot*; the algorithm needs enough entropy.
+- **Signature verification fails** – Verify that the backend signing endpoint (`http://localhost:3000/api/...`) is reachable if you are using the default server.
+- **Encryption errors** – The secret must be at least 16 characters; AES‑GCM requires a 96‑bit nonce.
+
+---
+
+## 📦 Project Structure
+```
+client-trace/
+├─ dist/               # Production build output
+├─ index.html          # Main UI entry point
+├─ style.css           # Premium dark‑mode stylesheet
+├─ app.js              # Front‑end logic (event handlers, UI updates)
+├─ package.json        # Project configuration & scripts
+├─ vite.config.js      # Vite configuration
+└─ README.md           # Documentation
 ```
 
-#### 2. Network Tampering Detection
-```javascript
-import { detectNetworkAPITampering } from 'client-trace';
+---
 
-const result = detectNetworkAPITampering();
-if (result.tampered) {
-  console.warn('Network APIs modified:', result.tamperedFunctions);
-}
-```
+## 📄 License
+ISC – see the LICENSE file for details.
 
-#### 3. Device Fingerprinting
-```javascript
-import { getDeviceFingerprint } from 'client-trace';
+---
 
-getDeviceFingerprint().then(({ fingerprintHash, components }) => {
-  console.log('Device ID:', fingerprintHash);
-});
-```
-
-#### 4. Bot Detection
-```javascript
-import { startBehaviorMonitoring, detectBot } from 'client-trace';
-
-// Start monitoring early in the session
-startBehaviorMonitoring();
-
-// Check later (e.g., before form submission)
-const botCheck = detectBot();
-if (botCheck.botLikely) {
-  console.warn('Bot detected!', botCheck.signals);
-}
-```
-
-#### 5. Secure Transport (Encryption)
-```javascript
-import { encryptTelemetry, decryptTelemetry } from 'client-trace';
-
-const payload = { event: 'login', timestamp: Date.now() };
-const secret = 'shared-secret-key';
-
-encryptTelemetry(payload, secret).then(encrypted => {
-  // Send `encrypted` object to server
-  console.log('Encrypted:', encrypted);
-});
-```
-
-## Modules Overview
-
-| Category | Module | Description |
-|----------|--------|-------------|
-| **Integrity** | `verifyBundleIntegrity` | Checks if the script file matches expected hash. |
-| | `generateSessionToken` | Creates a signed token binding user to IP/UA. |
-| **Network** | `detectNetworkAPITampering` | Checks if `fetch` or `XHR` are native code. |
-| | `detectProxy` | Inspects headers for proxy signatures. |
-| | `detectTimingAnomalies` | Measures DNS/TTFB to find MITM delays. |
-| **Fingerprint** | `getDeviceFingerprint` | Hashes non-unique signals (screen, OS, timezone). |
-| | `detectBot` | Analyzes entropy of mouse moves and clicks. |
-| **Security** | `detectInjections` | Monitors DOM for new `<script>` tags. |
-| | `listenForCSPViolations` | Captures CSP violation events. |
-| | `checkStorageIntegrity` | Verifies `localStorage` hasn't been changed externally. |
-| **Transport** | `signPayload` | Signs data with HMAC-SHA256. |
-| | `encryptTelemetry` | Encrypts data with AES-GCM. |
-| | `getNonce` | Generates rotating nonce for replay protection. |
-
-## License
-
-ISC
+*Happy testing!* 🎉
