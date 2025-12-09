@@ -1,7 +1,7 @@
 // Import all modules from the library
-import * as ClientTrace from '../src/index.js';
+import * as ClientTrace from 'client-trace';
 
-const BACKEND_URL = 'https://localhost:5000'; // run backend server on port 5000 from backend branch
+const BACKEND_URL = 'client-trace-production.up.railway.app'; // run backend server on port 5000 from backend branch
 
 // Helper function to display results
 function displayResult(elementId, data, type = 'success') {
