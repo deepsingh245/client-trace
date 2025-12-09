@@ -16,39 +16,21 @@ The test suite provides a visual interface to test all 14 security modules in th
 
 ## How to Run
 
-### Option 1: Local Development Server (Recommended)
+### Prerequisite
+You need **Node.js** installed on your machine.
 
-Since the library uses ES6 modules, you need to serve the files via HTTP (not `file://`).
+### Start the Test Environment
+1.  Open a terminal in the repository root.
+2.  Run the dedicated test server:
+    ```bash
+    node test/server.js
+    ```
+3.  Open your browser and navigate to:
+    [http://localhost:3000/test/index.html](http://localhost:3000/test/index.html)
 
-#### Using Python:
-```bash
-# Navigate to the project root
-cd client-trace
+**Why a custom server?**  
+The library uses modern browser APIs (`crypto.subtle`, `fetch`) and ES6 modules. A backend is also required to verify signatures, tokens, and encryption in a realistic way. The included `test/server.js` handles both static file serving and these API verifications.
 
-# Python 3
-python -m http.server 8000
-```
-
-#### Using Node.js (http-server):
-```bash
-# Install http-server globally (if not installed)
-npm install -g http-server
-
-# Run from project root
-http-server -p 8000
-```
-
-#### Using Live Server (VS Code Extension):
-1. Install the "Live Server" extension in VS Code
-2. Right-click on `test/index.html`
-3. Select "Open with Live Server"
-
-### Option 2: Access the Test Suite
-
-Once the server is running, open your browser and navigate to:
-```
-http://localhost:8000/test/
-```
 
 ## Test Guide
 

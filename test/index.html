@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Client-Trace Test Suite</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -21,6 +23,7 @@
                 <p>Verify the integrity of a JavaScript bundle using SHA-256 hashing.</p>
                 <div class="button-group">
                     <button id="test-bundle-integrity" class="btn btn-primary">Test Bundle Integrity</button>
+                    <button id="test-bundle-tampered" class="btn btn-warning">Test Faulty Bundle (Tampered)</button>
                 </div>
                 <div id="result-bundle-integrity" class="result"></div>
             </div>
@@ -56,6 +59,7 @@
                 <p>Check for proxy signatures in HTTP headers.</p>
                 <div class="button-group">
                     <button id="test-proxy" class="btn btn-primary">Test Proxy Detection</button>
+                    <button id="test-proxy-simulate" class="btn btn-warning">Simulate Proxy (Fake)</button>
                 </div>
                 <div id="result-proxy" class="result"></div>
             </div>
@@ -82,12 +86,21 @@
             </div>
             <div class="test-card">
                 <h3>Bot Detection</h3>
-                <p>Analyze user behavior to detect automated bots.</p>
+                <p>Analyze user behavior (mouse entropy, click speed) to identify automated bots.</p>
                 <div class="info-box">
-                    <p>👆 Move your mouse around and click a few times, then test!</p>
+                    <p><strong>How to trigger "Bot Detected":</strong></p>
+                    <ul style="text-align: left; margin-bottom: 10px;">
+                        <li style="list-style: none;">🤖 <strong>Option A (Scripted):</strong> Click "Simulate Bot
+                            Movement" to programmatically
+                            inject perfect straight-line mouse events.</li>
+                        <li style="list-style: none;">⚡ <strong>Option B (Manual):</strong> Try clicking this box
+                            extremely fast (>10 times/sec).
+                        </li>
+                    </ul>
                 </div>
                 <div class="button-group">
                     <button id="start-monitor" class="btn btn-success">Start Monitoring</button>
+                    <button id="simulate-bot" class="btn btn-warning">Simulate Bot Movement</button>
                     <button id="test-bot" class="btn btn-primary">Detect Bot</button>
                     <button id="stop-monitor" class="btn btn-danger">Stop Monitoring</button>
                 </div>
@@ -134,7 +147,8 @@
                 <h3>Payload Signing</h3>
                 <p>Sign data with HMAC-SHA256 for authenticity.</p>
                 <div class="input-group">
-                    <textarea id="payload-sign" placeholder='{"event": "login", "user": "john"}'>{"event": "login", "user": "john"}</textarea>
+                    <textarea id="payload-sign"
+                        placeholder='{"event": "login", "user": "john"}'>{"event": "login", "user": "john"}</textarea>
                     <input type="password" id="sign-secret" placeholder="Secret Key" value="my-secret-key">
                 </div>
                 <div class="button-group">
@@ -180,4 +194,5 @@
 
     <script type="module" src="app.js"></script>
 </body>
+
 </html>

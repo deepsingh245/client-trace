@@ -1,7 +1,7 @@
 // Import all modules from the library
 import * as ClientTrace from '../src/index.js';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = 'https://0220c7cd646a.ngrok-free.app'; // Relative paths, served by same origin
 
 // Helper function to display results
 function displayResult(elementId, data, type = 'success') {
@@ -24,6 +24,31 @@ document.getElementById('test-bundle-integrity').addEventListener('click', async
             'fakehash123' // This will fail intentionally, or we can update to real hash later
         );
         displayResult('result-bundle-integrity', result, result.integrityOk ? 'success' : 'warning');
+    } catch (error) {
+        displayResult('result-bundle-integrity', { error: error.message }, 'error');
+    }
+});
+
+// Test Faulty Bundle (Tampered)
+document.getElementById('test-bundle-tampered').addEventListener('click', async () => {
+    try {
+        // Fetch a modified bundle but expect the ORIGINAL hash (fakehash123 is just a placeholder here, 
+        // in real usage we'd use the real hash of the good bundle).
+        // To make this clearer, let's assume 'fakehash123' is what we expect for a GOOD bundle.
+        // The endpoint returns DIFFERENT content, so the hash won't match.
+
+        const result = await ClientTrace.verifyBundleIntegrity(
+            `${BACKEND_URL}/api/integrity/bundle-tampered`,
+            'fakehash123'
+        );
+
+        // We EXPECT this to fail (integrityOk: false)
+        const type = result.integrityOk ? 'error' : 'success'; // Success means we successfully DETECTED the failure
+        const message = result.integrityOk
+            ? 'FAILED: integrity check passed but should have failed!'
+            : 'SUCCESS: Tampering correctly detected!';
+
+        displayResult('result-bundle-integrity', { ...result, testVerdict: message }, type);
     } catch (error) {
         displayResult('result-bundle-integrity', { error: error.message }, 'error');
     }
@@ -84,6 +109,24 @@ document.getElementById('test-proxy').addEventListener('click', async () => {
     }
 });
 
+// Test Proxy Detection (Simulated)
+document.getElementById('test-proxy-simulate').addEventListener('click', async () => {
+    try {
+        // Call backend with simulate=true
+        const result = await ClientTrace.detectProxy(`${BACKEND_URL}/api/network/detect-proxy?simulate=true`);
+
+        // We expect proxyLikely to be true here
+        const type = result.proxyLikely ? 'success' : 'error';
+        const message = result.proxyLikely
+            ? 'SUCCESS: Proxy correctly detected!'
+            : 'FAILED: Proxy was simulated but not detected.';
+
+        displayResult('result-proxy', { ...result, testVerdict: message }, type);
+    } catch (error) {
+        displayResult('result-proxy', { error: error.message }, 'error');
+    }
+});
+
 // Test Timing Anomalies
 document.getElementById('test-timing').addEventListener('click', async () => {
     try {
@@ -110,6 +153,11 @@ document.getElementById('test-fingerprint').addEventListener('click', async () =
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result)
         });
+
+        // Check for HTTP errors (non-2xx responses)
+        if (!serverResponse.ok) {
+            throw new Error(`Backend error: ${serverResponse.status} - ${serverResponse.statusText}`);
+        }
         const serverData = await serverResponse.json();
 
         displayResult('result-fingerprint', { client: result, server: serverData }, 'success');
@@ -133,22 +181,67 @@ document.getElementById('stop-monitor').addEventListener('click', () => {
 // Test Bot Detection
 document.getElementById('test-bot').addEventListener('click', () => {
     const result = ClientTrace.detectBot();
+    sendBotReport(result);
+});
 
-    // Simulate sending behavior data to backend
+// Simulate Bot Behavior (Scripted Events)
+document.getElementById('simulate-bot').addEventListener('click', () => {
+    // 1. Ensure monitoring is on
+    ClientTrace.startBehaviorMonitoring();
+
+    // 2. Inject perfect linear movements (Low Entropy)
+    // Bots often move in straight lines or perfect curves. Humans are shaky.
+    console.log("Injecting bot-like mouse movements...");
+
+    const startX = 100;
+    const startY = 100;
+
+    for (let i = 0; i < 30; i++) {
+        const event = new MouseEvent('mousemove', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: startX + (i * 10), // Perfectly straight line
+            clientY: startY + (i * 10)
+        });
+        window.dispatchEvent(event);
+    }
+
+    // 3. Immediately check detection
+    const result = ClientTrace.detectBot();
+
+    // Verify it worked
+    if (result.botLikely) {
+        displayResult('result-bot', {
+            message: 'Bot Simulation Successful! strictly linear movement detected.',
+            result
+        }, 'success'); // We assume "success" because the simulaton worked
+    } else {
+        displayResult('result-bot', {
+            message: 'Simulation failed to trigger detection. Try clearing history (Stop/Start) or move less.',
+            result
+        }, 'warning');
+    }
+
+    // Send to backend
+    sendBotReport(result);
+});
+
+function sendBotReport(result) {
     fetch(`${BACKEND_URL}/api/bot-detection`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            result,
-            events: window.ClientTraceBehaviorEvents || [] // Assuming library exposes this or we simulate
-        })
+        body: JSON.stringify({ result })
     })
         .then(res => res.json())
         .then(serverData => {
-            displayResult('result-bot', { client: result, server: serverData }, result.botLikely ? 'warning' : 'success');
+            // Only update if we haven't already shown the simulation result
+            if (!document.getElementById('result-bot').textContent.includes('Simulation')) {
+                displayResult('result-bot', { client: result, server: serverData }, result.botLikely ? 'warning' : 'success');
+            }
         })
         .catch(err => displayResult('result-bot', { error: err.message }, 'error'));
-});
+}
 
 // ============================================
 // SECURITY TESTS
@@ -225,6 +318,10 @@ document.getElementById('test-sign').addEventListener('click', async () => {
                 secret
             })
         });
+        // Check for HTTP errors (non-2xx responses)
+        if (!verifyResponse.ok) {
+            throw new Error(`Backend error: ${verifyResponse.status} - ${verifyResponse.statusText}`);
+        }
         const verifyData = await verifyResponse.json();
 
         displayResult('result-sign', { signed, verification: verifyData }, 'success');
@@ -253,6 +350,12 @@ document.getElementById('test-encrypt').addEventListener('click', async () => {
                 secret
             })
         });
+
+        // Check for HTTP errors (non-2xx responses)
+        if (!decryptResponse.ok) {
+            throw new Error(`Backend error: ${decryptResponse.status} - ${decryptResponse.statusText}`);
+        }
+
         const decryptData = await decryptResponse.json();
 
         displayResult('result-encrypt', {
