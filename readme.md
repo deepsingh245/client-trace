@@ -1,125 +1,98 @@
-# client-trace
+# client-trace Backend Server
 
-A comprehensive client-side security and telemetry library for modern web applications. `client-trace` provides a suite of modules to detect tampering, identify devices, monitor behavior, and secure data transport.
+[![npm version](https://img.shields.io/npm/v/client-trace.svg)](https://www.npmjs.com/package/client-trace)
 
-## Features
+This repository hosts the **client-trace** backend server, now distributed as an npm package. The server provides API endpoints to support the client-side security library, handling integrity checks, device fingerprinting, bot detection, and secure transport.
 
-- **Integrity Verification**: Detect if your client bundle has been modified.
-- **Network Analysis**: Detect monkey-patched `fetch`/`XHR`, proxies, and timing anomalies.
-- **Device Fingerprinting**: Lightweight, privacy-friendly device identification.
-- **Bot Detection**: Analyze mouse movements and click patterns to identify bots.
-- **Security Monitoring**: Detect script injections, CSP violations, and local storage tampering.
-- **Secure Transport**: End-to-end encryption (AES-GCM), payload signing (HMAC), and replay protection.
-
-## Installation
+## 📦 Installation
 
 ```bash
+npm install -g client-trace   # install globally to use the CLI
+# or as a dependency in your project
 npm install client-trace
 ```
 
-## Usage
+## 🚀 Getting Started
 
-### Quick Start (Aggregated Report)
+After installing, you can run the server directly:
 
-The easiest way to use `client-trace` is to collect a full security report.
-
-```javascript
-import { collectSecurityReport } from 'client-trace';
-
-const config = {
-  bundleUrl: '/assets/main.js',
-  expectedBundleHash: 'sha256-hash-of-your-bundle', // Optional
-  pingUrl: '/api/ping', // For proxy/timing detection
-  userUniqueId: 'user-123', // For session token
-  hashedIp: 'hash-of-ip', // Provided by server
-  secret: 'your-shared-secret' // For signing/encryption
-};
-
-collectSecurityReport(config).then(report => {
-  console.log('Security Report:', report);
-  // Send report to your server
-});
+```bash
+node -e "import('client-trace/server.js').then(m => m.default())"   # ES module import
+# or, if installed globally
+client-trace
 ```
 
-### Modular Usage
+The server starts on **port 5000** by default.
 
-You can also import and use individual modules as needed.
-
-#### 1. Bundle Integrity
-```javascript
-import { verifyBundleIntegrity } from 'client-trace';
-
-verifyBundleIntegrity('/main.js', 'expected-hash').then(result => {
-  if (!result.integrityOk) {
-    console.error('Bundle tampered!', result.actualHash);
-  }
-});
+```text
+Test server running at http://localhost:5000/
 ```
 
-#### 2. Network Tampering Detection
-```javascript
-import { detectNetworkAPITampering } from 'client-trace';
+## 📡 API Endpoints
 
-const result = detectNetworkAPITampering();
-if (result.tampered) {
-  console.warn('Network APIs modified:', result.tamperedFunctions);
-}
+The server exposes the following endpoints to support the client SDK:
+
+### Authentication
+- **POST** `/api/auth/session`
+  - Generates a signed session token binding the user to their IP.
+  - **Body**: `{ "userId": "string", "ipHash": "string", "secret": "string" }`
+  - **Returns**: `{ "token": "string", "expiry": number }`
+
+### Network Analysis
+- **GET** `/api/network/detect-proxy`
+  - Inspects headers to detect proxy usage.
+  - **Query Params**: `?simulate=true` (simulates proxy headers for testing)
+  - **Returns**: JSON reflecting `Via`, `X-Forwarded-For`, etc.
+
+- **GET** `/api/network/timing`
+  - Measures latency and detects timing anomalies.
+  - **Returns**: `{ "timestamp": number }`
+
+### Device Fingerprinting
+- **POST** `/api/fingerprint`
+  - Receives the device fingerprint hash from the client.
+  - **Body**: `{ "fingerprintHash": "string", ... }`
+  - **Returns**: `{ "received": true, "serverTime": number }`
+
+### Bot Detection
+- **POST** `/api/bot-detection`
+  - Validates the bot detection analysis performed by the client.
+  - **Body**: `{ "result": { "botLikely": boolean, ... } }`
+  - **Returns**: `{ "verdict": "bot" | "human" }`
+
+### Secure Transport
+- **POST** `/api/transport/verify-signature`
+  - Verifies the HMAC signature of a payload.
+  - **Body**: `{ "payload": object, "signature": "string", "secret": "string" }`
+  - **Returns**: `{ "isValid": boolean }`
+
+- **POST** `/api/transport/decrypt`
+  - Decrypts AES‑GCM encrypted telemetry data.
+  - **Body**: `{ "encryptedData": { "ciphertext": "base64", "iv": "base64", "authTag": "base64", "salt": "base64" }, "secret": "string" }`
+  - **Returns**: Decrypted JSON object or an error.
+
+### Security Reports
+- **POST** `/api/csp-report`
+  - Endpoint for browser CSP violation reports.
+
+## 📚 Usage Example (Node)
+
+```javascript
+import { createServer } from 'http';
+import server from 'client-trace/server.js';
+
+// The imported module starts the server automatically when required.
 ```
 
-#### 3. Device Fingerprinting
-```javascript
-import { getDeviceFingerprint } from 'client-trace';
+## 🛠️ Development
 
-getDeviceFingerprint().then(({ fingerprintHash, components }) => {
-  console.log('Device ID:', fingerprintHash);
-});
+If you need to modify the server, clone the repository and run:
+
+```bash
+npm install
+node server.js
 ```
 
-#### 4. Bot Detection
-```javascript
-import { startBehaviorMonitoring, detectBot } from 'client-trace';
-
-// Start monitoring early in the session
-startBehaviorMonitoring();
-
-// Check later (e.g., before form submission)
-const botCheck = detectBot();
-if (botCheck.botLikely) {
-  console.warn('Bot detected!', botCheck.signals);
-}
-```
-
-#### 5. Secure Transport (Encryption)
-```javascript
-import { encryptTelemetry, decryptTelemetry } from 'client-trace';
-
-const payload = { event: 'login', timestamp: Date.now() };
-const secret = 'shared-secret-key';
-
-encryptTelemetry(payload, secret).then(encrypted => {
-  // Send `encrypted` object to server
-  console.log('Encrypted:', encrypted);
-});
-```
-
-## Modules Overview
-
-| Category | Module | Description |
-|----------|--------|-------------|
-| **Integrity** | `verifyBundleIntegrity` | Checks if the script file matches expected hash. |
-| | `generateSessionToken` | Creates a signed token binding user to IP/UA. |
-| **Network** | `detectNetworkAPITampering` | Checks if `fetch` or `XHR` are native code. |
-| | `detectProxy` | Inspects headers for proxy signatures. |
-| | `detectTimingAnomalies` | Measures DNS/TTFB to find MITM delays. |
-| **Fingerprint** | `getDeviceFingerprint` | Hashes non-unique signals (screen, OS, timezone). |
-| | `detectBot` | Analyzes entropy of mouse moves and clicks. |
-| **Security** | `detectInjections` | Monitors DOM for new `<script>` tags. |
-| | `listenForCSPViolations` | Captures CSP violation events. |
-| | `checkStorageIntegrity` | Verifies `localStorage` hasn't been changed externally. |
-| **Transport** | `signPayload` | Signs data with HMAC-SHA256. |
-| | `encryptTelemetry` | Encrypts data with AES-GCM. |
-| | `getNonce` | Generates rotating nonce for replay protection. |
-
-## License
+## 📄 License
 
 ISC

@@ -7,7 +7,7 @@ import { createHmac, createHash, createDecipheriv, pbkdf2 } from 'crypto';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PORT = 3000;
+const PORT = 5000;
 const REPO_ROOT = join(__dirname, '..');
 
 const MIME_TYPES = {
