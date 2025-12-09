@@ -1,15 +1,7 @@
 import { createServer } from 'http';
 import { createHmac, createDecipheriv, pbkdf2 } from 'crypto';
-import cors from 'cors';
 
 const PORT = process.env.PORT || 5000;
-
-// Initialize cors middleware
-const corsMiddleware = cors({
-    origin: ['http://localhost:3000', 'client-trace-demo-production.up.railway.app'], // allow requests from these origins
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // you can specify allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // specify allowed headers if needed
-});
 
 // Helper to parse JSON body
 function parseBody(req) {
@@ -29,12 +21,17 @@ function parseBody(req) {
 
 const server = createServer(async (req, res) => {
     // Apply CORS middleware
-    corsMiddleware(req, res, async () => {
-        if (req.method === 'OPTIONS') {
-            res.writeHead(204);
-            res.end();
-            return;
-        }
+    res.setHeader('Access-Control-Allow-Origin', 'http://client-trace-demo-production.up.railway.app');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
 
         const url = new URL(req.url, `http://${req.headers.host}`);
         const pathname = url.pathname;
@@ -249,8 +246,6 @@ const server = createServer(async (req, res) => {
 
     res.writeHead(404);
     res.end('Not Found');
-
-    });
 });
 
 server.listen(PORT, () => {
