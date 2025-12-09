@@ -12,7 +12,15 @@ export async function detectProxy(pingUrl) {
     try {
         const response = await fetch(pingUrl, { method: 'HEAD' });
         const headers = response.headers;
+        for (const [key, value] of headers.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        // Option 2: Convert to a plain object and log
         const detectedHeaders = {};
+        for (const [key, value] of headers.entries()) {
+            detectedHeaders[key] = value;
+        }
         const proxyHeaders = [
             'via',
             'x-forwarded-for',

@@ -34,10 +34,10 @@ async function deriveKey(secret, salt) {
 }
 
 /**
- * Encrypts a payload.
+ * Encrypts a payload.  
  * @param {object} payload - The data to encrypt.
  * @param {string} secret - The shared secret.
- * @returns {Promise<{ iv: string, ciphertext: string, salt: string }>}
+ * @returns {Promise<{ iv: string, ciphertext: string, authTag: string, salt: string }>}
  */
 export async function encryptTelemetry(payload, secret) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -47,7 +47,7 @@ export async function encryptTelemetry(payload, secret) {
     const encoder = new TextEncoder();
     const data = encoder.encode(JSON.stringify(payload));
 
-    const ciphertextBuffer = await crypto.subtle.encrypt(
+    const encryptedBuffer = await crypto.subtle.encrypt(
         {
             name: 'AES-GCM',
             iv: iv
@@ -56,12 +56,18 @@ export async function encryptTelemetry(payload, secret) {
         data
     );
 
+    // Split ciphertext and authentication tag (last 16 bytes)
+    const encryptedArray = new Uint8Array(encryptedBuffer);
+    const tag = encryptedArray.slice(-16);
+    const ciphertext = encryptedArray.slice(0, -16);
+
     // Convert to Base64 for transport
-    const toBase64 = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const toBase64 = (buffer) => btoa(String.fromCharCode(...buffer));
 
     return {
         iv: toBase64(iv),
-        ciphertext: toBase64(ciphertextBuffer),
+        ciphertext: toBase64(ciphertext),
+        authTag: toBase64(tag),
         salt: toBase64(salt)
     };
 }

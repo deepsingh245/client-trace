@@ -10,6 +10,20 @@ A comprehensive client-side security and telemetry library for modern web applic
 - **Bot Detection**: Analyze mouse movements and click patterns to identify bots.
 - **Security Monitoring**: Detect script injections, CSP violations, and local storage tampering.
 - **Secure Transport**: End-to-end encryption (AES-GCM), payload signing (HMAC), and replay protection.
+## Use Cases
+
+- **Client‑side bundle integrity verification** – `verifyBundleIntegrity` ensures the running JavaScript bundle matches a known hash.
+- **Session‑token generation** – `generateSessionToken` creates a signed token for API calls.
+- **Network‑level API tampering detection** – `detectNetworkAPITampering` flags monkey‑patched `fetch`/`XHR`.
+- **Proxy / VPN detection** – `detectProxy` measures latency and header anomalies.
+- **Timing‑anomaly detection** – `detectTimingAnomalies` spots abnormal round‑trip times.
+- **Device fingerprinting** – `getDeviceFingerprint` builds a privacy‑friendly device identifier.
+- **Bot / headless‑browser detection** – `detectBot` analyses mouse entropy, rapid clicks, and headless flags.
+- **Script‑injection monitoring** – `detectInjections` watches for unexpected `<script>` tags.
+- **CSP violation listener** – `listenForCSPViolations` aggregates CSP breach events.
+- **Local‑storage tampering detection** – `checkStorageIntegrity` validates stored data integrity.
+- **Secure transport helpers** – `signPayload`, `encryptTelemetry`, `getNonce` provide signing, encryption, and replay protection.
+- **Aggregated security report** – `collectSecurityReport` runs all checks and returns a single JSON payload.
 
 ## Installation
 
