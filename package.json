@@ -1,0 +1,28 @@
+{
+  "name": "client-trace-server",
+  "version": "1.0.0",
+  "description": "Test server for the client-trace SDK - demonstrating security features including integrity checks, authentication, network analysis, fingerprinting, bot detection, and transport encryption.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "client-trace",
+    "security",
+    "sdk",
+    "fingerprinting",
+    "bot-detection",
+    "encryption"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}

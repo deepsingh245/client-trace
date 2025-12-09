@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { createHmac, createDecipheriv, pbkdf2 } from 'crypto';
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Helper to parse JSON body
 function parseBody(req) {
