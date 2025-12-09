@@ -1,26 +1,29 @@
 # client-trace Backend Server
 
-[![npm version](https://img.shields.io/npm/v/client-trace.svg)](https://www.npmjs.com/package/client-trace)
+This repository hosts the **Test Server** for the `client-trace` security library. It is a standalone Node.js server designed to verify the functionality of the [client-trace npm package](https://www.npmjs.com/package/client-trace) by handling telemetry, integrity checks, and security reports.
 
-This repository hosts the **client-trace** backend server, now distributed as an npm package. The server provides API endpoints to support the client-side security library, handling integrity checks, device fingerprinting, bot detection, and secure transport.
+## 🚀 Running the Test Server
 
-## 📦 Installation
-
-```bash
-npm install -g client-trace   # install globally to use the CLI
-# or as a dependency in your project
-npm install client-trace
-```
-
-## 🚀 Getting Started
-
-After installing, you can run the server directly:
+This server is intended to be run directly to support client-side testing.
 
 ```bash
-node -e "import('client-trace/server.js').then(m => m.default())"   # ES module import
-# or, if installed globally
-client-trace
+# Clone the repository (if you haven't already)
+# git clone ...
+
+# Install dependencies (only internal dev dependencies if any, or just run node)
+# Currently, the server has no external dependencies.
+
+# Start the server
+node server.js
 ```
+
+The server starts on **port 5000** by default.
+
+```text
+Test server running at http://localhost:5000/
+```
+
+> **Note**: This server provides the backend API endpoints required by the `client-trace` library. To use the security features in your frontend application, install the library: `npm install client-trace`.
 
 The server starts on **port 5000** by default.
 
@@ -31,6 +34,15 @@ Test server running at http://localhost:5000/
 ## 📡 API Endpoints
 
 The server exposes the following endpoints to support the client SDK:
+
+### Integrity Checks
+- **GET** `/api/integrity/bundle`
+  - Serves a clean mock JavaScript bundle for integrity verification tests.
+  - **Returns**: `text/javascript` content (`console.log('Valid Bundle');`).
+
+- **GET** `/api/integrity/bundle-tampered`
+  - Serves a tampered mock JavaScript bundle.
+  - **Returns**: `text/javascript` content with appended tamper code.
 
 ### Authentication
 - **POST** `/api/auth/session`

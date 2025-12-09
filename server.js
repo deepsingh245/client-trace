@@ -1,43 +1,7 @@
 import { createServer } from 'http';
-import { readFile } from 'fs';
-import { join, extname, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { createHmac, createHash, createDecipheriv, pbkdf2 } from 'crypto';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { createHmac, createDecipheriv, pbkdf2 } from 'crypto';
 
 const PORT = 5000;
-const REPO_ROOT = join(__dirname, '..');
-
-const MIME_TYPES = {
-    '.html': 'text/html',
-    '.js': 'text/javascript',
-    '.css': 'text/css',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-};
-
-// Helper to serve static files
-function serveStatic(req, res, filePath) {
-    readFile(filePath, (err, content) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                res.writeHead(404);
-                res.end('File not found');
-            } else {
-                res.writeHead(500);
-                res.end(`Server Error: ${err.code}`);
-            }
-        } else {
-            const ext = extname(filePath);
-            const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content, 'utf-8');
-        }
-    });
-}
 
 // Helper to parse JSON body
 function parseBody(req) {
@@ -74,26 +38,17 @@ const server = createServer(async (req, res) => {
 
     // --- API Endpoints ---
 
-    // 1. Integrity: Serve Bundle
+    // 1. Integrity: Serve Mock Bundle
     if (pathname === '/api/integrity/bundle') {
-        // Serve the main index.js as the "bundle"
-        // In a real build, this would be dist/bundle.js. 
-        // For this ESM setup, we'll serve src/index.js content but as a single file? 
-        // No, verifyBundleIntegrity fetches a URL. Let's serve strict file content.
-        const bundlePath = join(REPO_ROOT, 'src', 'index.js');
-        serveStatic(req, res, bundlePath);
+        res.writeHead(200, { 'Content-Type': 'text/javascript' });
+        res.end("console.log('Valid Bundle');");
         return;
     }
 
     // 1b. Integrity: Serve Tampered Bundle
     if (pathname === '/api/integrity/bundle-tampered') {
-        const bundlePath = join(REPO_ROOT, 'src', 'index.js');
-        readFile(bundlePath, 'utf8', (err, content) => {
-            if (err) { res.writeHead(500); res.end(); return; }
-            const tamperedContent = content + '\n// TAMPERED CODE DETECTED';
-            res.writeHead(200, { 'Content-Type': 'text/javascript' });
-            res.end(tamperedContent);
-        });
+        res.writeHead(200, { 'Content-Type': 'text/javascript' });
+        res.end("console.log('Valid Bundle');\n// TAMPERED CODE DETECTED");
         return;
     }
 
@@ -285,26 +240,13 @@ const server = createServer(async (req, res) => {
         });
     }
 
-    // --- Static File Serving ---
+    // --- Fallback ---
 
-    // Default to repo root
-    let requestedPath = join(REPO_ROOT, pathname);
-
-    // Safety check to prevent escaping repo root
-    if (!requestedPath.startsWith(REPO_ROOT)) {
-        res.writeHead(403);
-        res.end('Forbidden');
-        return;
-    }
-
-    // If directory, try index.html? No, explicit paths.
-
-    serveStatic(req, res, requestedPath);
+    res.writeHead(404);
+    res.end('Not Found');
 
 });
 
 server.listen(PORT, () => {
     console.log(`Test server running at http://localhost:${PORT}/`);
-    console.log(`Root directory: ${REPO_ROOT}`);
-    console.log(`Access test suite at: http://localhost:${PORT}/test/index.html`);
 });
