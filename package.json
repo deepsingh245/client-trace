@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies":{
-    "client-trace": "^1.0.0"
+    "client-trace": "^2.0.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"
