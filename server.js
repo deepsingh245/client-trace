@@ -1,13 +1,12 @@
 import { createServer } from 'http';
-import { createHmac, createDecipheriv, pbkdf2 } from 'crypto';
+import { createHmac } from 'crypto';
 
 const PORT = process.env.PORT || 5000;
 
-// Helper to parse JSON body
 function parseBody(req) {
     return new Promise((resolve, reject) => {
         let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('data', chunk => body += chunk.toString());
         req.on('end', () => {
             try {
                 resolve(body ? JSON.parse(body) : {});
@@ -20,23 +19,22 @@ function parseBody(req) {
 }
 
 const server = createServer(async (req, res) => {
-    // Apply CORS middleware
+    // --- CORS ---
     res.setHeader('Access-Control-Allow-Origin', 'https://client-trace-demo-production.up.railway.app');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
-    // Handle preflight OPTIONS request
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
         return;
     }
 
-        const url = new URL(req.url, `http://${req.headers.host}`);
-        const pathname = url.pathname;
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    const pathname = url.pathname;
 
-        console.log(`${req.method} ${pathname}`);
+    console.log(`${req.method} ${pathname}`);
 
     // --- API Endpoints ---
 
@@ -59,25 +57,24 @@ const server = createServer(async (req, res) => {
         try {
             const { userId, ipHash, secret } = await parseBody(req);
 
-            // Replicate the client-side logic using Node crypto
-            // token = base64(userId) . base64(ipHash) . base64(expiry) . signature
-            const expiry = Date.now() + 3600000; // 1 hour
+            const expiry = Date.now() + 3600000;
 
-            // Note: In a real app, you shouldn't just sign whatever the client gives you blindly,
-            // but this is a test endpoint to verify the CLIENT can validate the token.
             const b64 = str => Buffer.from(String(str)).toString('base64');
             const dataToSign = `${b64(userId)}.${b64(ipHash)}.${b64(expiry)}`;
 
             const hmac = createHmac('sha256', secret);
             hmac.update(dataToSign);
-            const signature = hmac.digest('hex');
 
+            const signature = hmac.digest('hex');
             const token = `${dataToSign}.${signature}`;
 
-            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ token, expiry }));
-        } catch (e) {
-            res.writeHead(400); res.end(JSON.stringify({ error: e.message }));
+        } catch (err) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: err.message }));
         }
         return;
     }
@@ -96,18 +93,16 @@ const server = createServer(async (req, res) => {
             headers['x-forwarded-for'] = '203.0.113.195';
             headers['x-proxy-id'] = 'proxy-123';
         }
-        const responseHeaders = {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Expose-Headers': 'via, x-forwarded-for, x-proxy-id'
-        };
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Expose-Headers', 'via, x-forwarded-for, x-proxy-id');
 
         // Add proxy headers
-        if (headers['via']) responseHeaders['via'] = headers['via'];
-        if (headers['x-forwarded-for']) responseHeaders['x-forwarded-for'] = headers['x-forwarded-for'];
-        if (headers['x-proxy-id']) responseHeaders['x-proxy-id'] = headers['x-proxy-id'];
+        if (headers['via']) res.setHeader('via', headers['via']);
+        if (headers['x-forwarded-for']) res.setHeader('x-forwarded-for', headers['x-forwarded-for']);
+        if (headers['x-proxy-id']) res.setHeader('x-proxy-id', headers['x-proxy-id']);
 
-        res.writeHead(200, responseHeaders);
         res.end(JSON.stringify({ message: 'Proxy headers sent' }));
         return;
     }
