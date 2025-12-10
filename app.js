@@ -233,7 +233,12 @@ function sendBotReport(result) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result })
     })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Backend error: ${res.status} - ${res.statusText}`);
+            }
+            return res.json();
+        })
         .then(serverData => {
             // Only update if we haven't already shown the simulation result
             if (!document.getElementById('result-bot').textContent.includes('Simulation')) {
@@ -270,17 +275,27 @@ document.getElementById('start-csp').addEventListener('click', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/csp-report' }, // Standard MIME type often used
             body: JSON.stringify(violation)
-        }).catch(console.error);
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`Backend error: ${res.status} - ${res.statusText}`);
+                }
+            })
+            .catch(err => console.error('Failed to report CSP violation:', err.message));
     });
     displayResult('result-csp', { message: 'CSP listener started. Violations will be sent to backend.' }, 'success');
 });
 
 // Initialize storage monitoring
 document.getElementById('init-storage').addEventListener('click', async () => {
-    localStorage.setItem('test-key-1', 'test-value-1');
-    localStorage.setItem('test-key-2', 'test-value-2');
-    await ClientTrace.monitorStorage(['test-key-1', 'test-key-2']);
-    displayResult('result-storage', { message: 'Storage initialized and monitoring started for test-key-1 and test-key-2' }, 'success');
+    try {
+        localStorage.setItem('test-key-1', 'test-value-1');
+        localStorage.setItem('test-key-2', 'test-value-2');
+        await ClientTrace.monitorStorage(['test-key-1', 'test-key-2']);
+        displayResult('result-storage', { message: 'Storage initialized and monitoring started for test-key-1 and test-key-2' }, 'success');
+    } catch (error) {
+        displayResult('result-storage', { error: error.message }, 'error');
+    }
 });
 
 // Tamper with storage
