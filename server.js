@@ -4,6 +4,17 @@ import { createHmac, pbkdf2, createDecipheriv } from 'crypto';
 
 const PORT = process.env.PORT || 5000;
 
+function setCorsHeaders(res, req) {
+  const origin = req.headers.origin || "*";
+
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
+  res.setHeader("Access-Control-Expose-Headers", "via, x-forwarded-for, x-proxy-id");
+  res.setHeader("Vary", "Origin");
+}
+
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -22,23 +33,9 @@ function parseBody(req) {
   });
 }
 
-function setCorsHeaders(res) {
-  // You asked for "All" — this sets Access-Control-Allow-Origin to '*'
-  // Note: with '*' you cannot use cookies/credentials (Access-Control-Allow-Credentials: true)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD, PUT, DELETE');
-  // Browsers won't accept '*' for Access-Control-Allow-Headers on preflight; list common headers.
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  // Expose any custom headers you might return
-  res.setHeader('Access-Control-Expose-Headers', 'via, x-forwarded-for, x-proxy-id');
-  // Help caches/proxies vary responses by Origin — good practice
-  res.setHeader('Vary', 'Origin');
-}
-
+// -------------------------
 async function deriveKey(secret, salt) {
-  // pbkdf2 callback -> promise wrapper
   return new Promise((resolve, reject) => {
-    // 100k iterations, 32 bytes, sha256 (matches your comment)
     pbkdf2(String(secret), salt, 100000, 32, 'sha256', (err, derivedKey) => {
       if (err) reject(err);
       else resolve(derivedKey);
@@ -46,19 +43,19 @@ async function deriveKey(secret, salt) {
   });
 }
 
+// -------------------------
 const server = createServer(async (req, res) => {
   try {
-    // Always set CORS headers first so every response includes them
-    setCorsHeaders(res);
+    // Always apply CORS first
+    setCorsHeaders(res, req);
 
-    // Handle preflight quickly
+    // Handle OPTIONS early
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
       return;
     }
 
-    // Safe URL parsing: req.url may be absolute-path. Use a stable base.
     const base = 'http://localhost';
     const url = new URL(req.url || '/', base);
     const pathname = url.pathname;
@@ -85,8 +82,7 @@ const server = createServer(async (req, res) => {
     if (pathname === '/api/auth/session' && req.method === 'POST') {
       try {
         const body = await parseBody(req);
-        // body might be raw string if not JSON — guard for that
-        const { userId, ipHash, secret } = typeof body === 'object' ? body : {};
+        const { userId, ipHash, secret } = (typeof body === 'object' ? body : {});
         if (!userId || !ipHash || !secret) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing userId, ipHash or secret' }));
@@ -123,7 +119,6 @@ const server = createServer(async (req, res) => {
         headers['x-proxy-id'] = 'proxy-123';
       }
 
-      // Add proxy headers to response if present
       if (headers.via) res.setHeader('via', headers.via);
       if (headers['x-forwarded-for']) res.setHeader('x-forwarded-for', headers['x-forwarded-for']);
       if (headers['x-proxy-id']) res.setHeader('x-proxy-id', headers['x-proxy-id']);
@@ -143,27 +138,30 @@ const server = createServer(async (req, res) => {
     // 5. Fingerprint
     if (pathname === '/api/fingerprint' && req.method === 'POST') {
       const data = await parseBody(req);
-      // accept either JSON object or raw string (if client sends text)
       const fingerprintHash = (typeof data === 'object' && data.fingerprintHash) ? data.fingerprintHash : data;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ received: true, serverTime: Date.now(), fingerprintHash }));
       return;
     }
 
+    // -------------------------
     // 6. Bot Detection
+    // -------------------------
     if (pathname === '/api/bot-detection' && req.method === 'POST') {
       const body = await parseBody(req);
       const { result } = (typeof body === 'object' ? body : {});
       let verdict = 'human';
       if (result && result.botLikely) verdict = 'bot';
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ verdict, analysis: 'Server concurs with client assessment' }));
       return;
     }
 
+    // -------------------------
     // 7. CSP Report
+    // -------------------------
     if (pathname === '/api/csp-report') {
-      // CSP reports might be sent with application/csp-report
       let body = '';
       req.on('data', chunk => { body += chunk.toString(); });
       req.on('end', () => {
@@ -194,10 +192,9 @@ const server = createServer(async (req, res) => {
         const hmac = createHmac('sha256', secret);
         hmac.update(payloadStr);
         const expectedSig = hmac.digest('hex');
-        const isValid = signature === expectedSig;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ isValid, serverDerivedSignature: expectedSig }));
+        res.end(JSON.stringify({ isValid: signature === expectedSig, serverDerivedSignature: expectedSig }));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: e.message }));
@@ -221,12 +218,6 @@ const server = createServer(async (req, res) => {
 
         const { ciphertext, iv: ivBase64, authTag: authTagBase64, salt: saltBase64 } = encryptedData;
 
-        if (!ciphertext || !ivBase64 || !authTagBase64 || !saltBase64) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'encryptedData missing ciphertext/iv/authTag/salt' }));
-          return;
-        }
-
         const ivBuf = Buffer.from(ivBase64, 'base64');
         const ciphertextBuf = Buffer.from(ciphertext, 'base64');
         const authTagBuf = Buffer.from(authTagBase64, 'base64');
@@ -244,13 +235,11 @@ const server = createServer(async (req, res) => {
           const parsed = JSON.parse(decrypted);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(parsed));
-        } catch (e) {
-          // Decrypted payload isn't JSON — return as text
+        } catch {
           res.writeHead(200, { 'Content-Type': 'text/plain' });
           res.end(decrypted);
         }
       } catch (e) {
-        console.error('Decryption failed:', e);
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Decryption failed', details: e.message }));
       }
@@ -260,10 +249,10 @@ const server = createServer(async (req, res) => {
     // Fallback
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found');
+
   } catch (globalErr) {
-    // Ensure CORS headers are present even on unexpected errors
-    try { setCorsHeaders(res); } catch (e) { /* ignore */ }
-    console.error('Unexpected error in request handler:', globalErr);
+    setCorsHeaders(res, req);
+    console.error("Unexpected error:", globalErr);
     if (!res.headersSent) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Internal Server Error' }));
