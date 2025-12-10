@@ -21,7 +21,8 @@ function parseBody(req) {
 const server = createServer(async (req, res) => {
     // --- CORS ---
     res.setHeader('Access-Control-Allow-Origin', 'https://client-trace-demo-production.up.railway.app');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
