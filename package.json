@@ -1,6 +1,6 @@
 {
   "name": "client-trace",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A comprehensive client-side security and telemetry library. Features device fingerprinting, bot detection, network tampering analysis, and secure transport.",
   "main": "index.js",
   "type": "module",
