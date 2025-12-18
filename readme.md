@@ -776,3 +776,24 @@ console.log('Nonce expires in:', Math.round((nonce.expiresAt - Date.now()) / 100
 ## License
 
 ISC
+
+---
+
+## Contributing
+
+Contributions are welcome!
+Feel free to open issues for bugs, feature requests, or documentation improvements.
+
+If you’d like to contribute code:
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Open a pull request
+
+## Development
+
+```bash
+npm install
+npm run build
+npm test
+```
